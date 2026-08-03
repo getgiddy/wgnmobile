@@ -1,0 +1,11 @@
+{
+	"configurations": [
+		{
+			"name": "wgnmobile (Flutter SM A135F)",
+			"program": "lib/main.dart",
+			"deviceId": "RZ8T412K2GY",
+			"request": "launch",
+			"type": "dart"
+		}
+	]
+}
