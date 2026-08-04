@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'auth_state.dart';
 import 'supabase_client.dart';
 
 /// Per-user state (works for anonymous users too): likes, saved devotionals,
@@ -78,6 +79,10 @@ class UserState {
 class UserStateNotifier extends Notifier<UserState> {
   @override
   UserState build() {
+    // Keyed on the user id, not the whole user: gotrue re-emits on every token
+    // refresh, and only a change of identity should throw this state away and
+    // refetch. Signing in or out now reloads without the caller asking.
+    ref.watch(authUserProvider.select((user) => user?.id));
     _load();
     return const UserState();
   }

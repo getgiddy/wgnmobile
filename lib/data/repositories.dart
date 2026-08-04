@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'auth_state.dart';
 import 'models.dart';
 import 'supabase_client.dart';
 
@@ -96,7 +97,10 @@ final myPrayersProvider = FutureProvider<List<PrayerRequest>>((ref) async {
 });
 
 final profileProvider = FutureProvider<Profile?>((ref) async {
-  final uid = supa.auth.currentUser?.id;
+  // Watching the auth user rather than reading it means signing in, out or
+  // switching accounts refetches on its own, instead of relying on every call
+  // site to remember an explicit invalidate.
+  final uid = ref.watch(authUserProvider)?.id;
   if (uid == null) return null;
   final row =
       await supa.from('profiles').select().eq('id', uid).maybeSingle();

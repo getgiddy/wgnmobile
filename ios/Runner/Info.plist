@@ -13,6 +13,28 @@
 		<key>NSAllowsLocalNetworking</key>
 		<true/>
 	</dict>
+	<!-- Google Sign-In returns to the app through a URL scheme that is the iOS
+	     OAuth client ID with its dot-separated parts reversed, e.g. client ID
+	     `123-abc.apps.googleusercontent.com` becomes the scheme
+	     `com.googleusercontent.apps.123-abc`.
+
+	     Sign in with Apple needs nothing here — it is entitlement-based, see
+	     Runner/Runner.entitlements.
+
+	     REPLACE the placeholder below with the real reversed client ID before
+	     shipping; the same client ID also goes in `.env.app` as
+	     GOOGLE_IOS_CLIENT_ID. See RELEASE_CHECKLIST.md section B. -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.REPLACE-WITH-REVERSED-IOS-CLIENT-ID</string>
+			</array>
+		</dict>
+	</array>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>

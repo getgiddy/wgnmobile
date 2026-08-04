@@ -245,21 +245,21 @@ class SermonRow extends ConsumerWidget {
                         ),
                       ),
                     ),
-                    const SizedBox(width: 16),
-                    GestureDetector(
-                      onTap: () => ref
-                          .read(userStateProvider.notifier)
-                          .toggleLike(sermon.id),
-                      child: Icon(
-                        liked
-                            ? Icons.favorite_rounded
-                            : Icons.favorite_border_rounded,
-                        size: 16,
-                        color: liked ? c.gold : c.txt3,
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Icon(Icons.more_horiz_rounded, size: 16, color: c.txt3),
+                    // const SizedBox(width: 16),
+                    // GestureDetector(
+                    //   onTap: () => ref
+                    //       .read(userStateProvider.notifier)
+                    //       .toggleLike(sermon.id),
+                    //   child: Icon(
+                    //     liked
+                    //         ? Icons.favorite_rounded
+                    //         : Icons.favorite_border_rounded,
+                    //     size: 16,
+                    //     color: liked ? c.gold : c.txt3,
+                    //   ),
+                    // ),
+                    // const SizedBox(width: 16),
+                    // Icon(Icons.more_horiz_rounded, size: 16, color: c.txt3),
                   ],
                 ),
               ],

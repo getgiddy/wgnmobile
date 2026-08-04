@@ -1,0 +1,6 @@
+# Supabase
+.branches
+.temp
+
+# Local secrets
+.env

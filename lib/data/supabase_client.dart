@@ -3,22 +3,37 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-/// Supabase endpoints.
+/// Supabase endpoints and third-party client IDs.
 ///
-/// Release builds must supply both values — there is no fallback, so a
-/// misconfigured release fails loudly at startup instead of silently
-/// shipping pointed at a developer's laptop:
+/// Every value here is a compile-time constant supplied by `--dart-define`.
+/// The whole set lives in `.env.app`, so the usual invocation is:
 ///
 /// ```
-/// flutter build appbundle \
-///   --dart-define=SUPABASE_URL=https://<ref>.supabase.co \
-///   --dart-define=SUPABASE_ANON_KEY=<publishable key>
+/// flutter run --dart-define-from-file=.env.app
+/// flutter build appbundle --dart-define-from-file=.env.app
 /// ```
 ///
-/// Debug and profile builds fall back to the local Supabase CLI stack.
+/// `.env.app` is deliberately separate from `.env`: dart-defines are compiled
+/// into the binary and readable with `strings`, so `SUPABASE_DB_PASSWORD` —
+/// which `.env` holds for the CLI — must never be passed this way.
+///
+/// Release builds must supply the URL and key — there is no fallback, so a
+/// misconfigured release fails loudly at startup instead of silently shipping
+/// pointed at a developer's laptop. Debug and profile builds fall back to the
+/// local Supabase CLI stack.
 class AppEnv {
   static const _definedUrl = String.fromEnvironment('SUPABASE_URL');
   static const _definedKey = String.fromEnvironment('SUPABASE_ANON_KEY');
+
+  /// Web (server) OAuth client ID from Google Cloud. This is the audience
+  /// Supabase validates the ID token against, so it is required on every
+  /// platform — Android included, where no iOS client is involved.
+  static const googleServerClientId =
+      String.fromEnvironment('GOOGLE_SERVER_CLIENT_ID');
+
+  /// iOS OAuth client ID. Used only by the native iOS Google SDK.
+  static const googleIosClientId =
+      String.fromEnvironment('GOOGLE_IOS_CLIENT_ID');
 
   /// Local CLI development key. Not a secret: it is identical on every machine
   /// running `supabase start`, and it only ever reaches localhost.

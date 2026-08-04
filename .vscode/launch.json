@@ -1,9 +1,26 @@
 {
 	"configurations": [
 		{
+			"name": "wgnmobile",
+			"program": "lib/main.dart",
+			"request": "launch",
+			"type": "dart",
+			"toolArgs": ["--dart-define-from-file=.env.app"]
+		},
+		{
 			"name": "wgnmobile (Flutter SM A135F)",
 			"program": "lib/main.dart",
 			"deviceId": "RZ8T412K2GY",
+			"request": "launch",
+			"type": "dart",
+			// Points the build at the hosted Supabase project and the OAuth
+			// client IDs. Without it the app falls back to the local
+			// `supabase start` stack. Copy `.env.app.example` to `.env.app`.
+			"toolArgs": ["--dart-define-from-file=.env.app"]
+		},
+		{
+			"name": "wgnmobile (local Supabase stack)",
+			"program": "lib/main.dart",
 			"request": "launch",
 			"type": "dart"
 		}

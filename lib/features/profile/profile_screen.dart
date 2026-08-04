@@ -7,13 +7,16 @@ import '../../core/theme/wgn_colors.dart';
 import '../../core/theme/wgn_theme.dart';
 import '../../core/widgets/toast.dart';
 import '../../core/widgets/wgn_widgets.dart';
+import '../../data/auth_state.dart';
 import '../../data/repositories.dart';
 import '../../data/supabase_client.dart';
 import '../../data/user_state.dart';
 import '../../services/download_manager.dart';
 import '../auth/auth_sheet.dart';
+import '../auth/social_auth.dart';
 import '../shell/screen_header.dart';
 import 'delete_account_sheet.dart';
+import 'edit_profile_sheet.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -24,7 +27,13 @@ class ProfileScreen extends ConsumerWidget {
     final profile = ref.watch(profileProvider).valueOrNull;
     final user = ref.watch(userStateProvider);
     final dlCount = ref.watch(downloadsProvider).count;
-    final isAnon = supa.auth.currentUser?.isAnonymous ?? true;
+    final isGuest = ref.watch(isGuestProvider);
+    final unconfirmed = ref.watch(awaitingEmailConfirmationProvider);
+    // `profiles.email` is synced by a trigger on `auth.users.email`, which
+    // does not fire until a pending address is confirmed — so fall back to the
+    // auth user, which knows about the unconfirmed one too.
+    final email =
+        profile?.email ?? accountEmail(ref.watch(authUserProvider)) ?? '';
 
     return SafeArea(
       bottom: false,
@@ -60,13 +69,20 @@ class ProfileScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  isAnon ? 'Browsing as a guest' : (profile?.email ?? ''),
+                  isGuest ? 'Browsing as a guest' : email,
                   style: WgnText.ui(11.5, color: c.txt2),
                 ),
+                if (unconfirmed) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    'Check your inbox to confirm this address',
+                    style: WgnText.ui(10.5, color: c.gold),
+                  ),
+                ],
               ],
             ),
           ),
-          if (isAnon) ...[
+          if (isGuest) ...[
             const SizedBox(height: 16),
             WgnButton(
               label: 'Create account · keep your streaks',
@@ -128,12 +144,21 @@ class ProfileScreen extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 8),
+          // A guest has nothing to edit yet, so the row still routes to the
+          // auth sheet for them; everyone else edits the profile in place
+          // rather than being asked to sign in again.
           _ProfileRow(
             'Personal details',
-            value: profile?.fullName ?? 'Add your name',
-            onTap: () => showAuthSheet(context),
+            value: profile?.fullName ?? (isGuest ? 'Add your name' : 'Edit'),
+            onTap: () => isGuest
+                ? showAuthSheet(context)
+                : showEditProfileSheet(context),
           ),
-          _ProfileRow('Home branch', value: profile?.branch ?? 'Not set'),
+          _ProfileRow(
+            'Home branch',
+            value: profile?.branch ?? 'Not set',
+            onTap: isGuest ? null : () => showEditProfileSheet(context),
+          ),
           _ProfileRow(
             'Giving history',
             value: 'View',
@@ -142,19 +167,32 @@ class ProfileScreen extends ConsumerWidget {
                 .show('Giving history arrives with online giving'),
           ),
           _ProfileRow('Notifications', value: 'On'),
-          if (!isAnon)
+          if (!isGuest)
             _ProfileRow(
               'Sign out',
+              value: email.isEmpty ? '' : email,
               onTap: () async {
+                final toast = ref.read(toastProvider.notifier);
                 await supa.auth.signOut();
+                // Supabase's signOut leaves the Google SDK's cached account
+                // alone, which would silently sign the next tap back into the
+                // same account without showing the picker.
+                await SocialAuth.signOutProviders();
                 try {
                   await supa.auth.signInAnonymously();
-                } on AuthException catch (_) {}
-                ref.invalidate(profileProvider);
-                await ref.read(userStateProvider.notifier).reload();
-                ref.read(toastProvider.notifier).show('Signed out');
+                } on AuthException catch (_) {
+                  // Anonymous sign-ins may be disabled on the project. The
+                  // sign-out itself still stands; the app simply has no
+                  // session until the next sign-in.
+                }
+                // profileProvider and userStateProvider watch the auth user,
+                // so both refetch on their own from here.
+                toast.show('Signed out');
               },
             ),
+          // Shown to guests too, deliberately: a guest session is a real
+          // account with real rows behind it, and deleting one is verified
+          // behaviour (RELEASE_CHECKLIST.md A3).
           _ProfileRow(
             'Delete account',
             danger: true,

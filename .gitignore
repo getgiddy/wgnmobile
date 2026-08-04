@@ -46,6 +46,11 @@ app.*.map.json
 
 .env
 
+# Build-time app configuration (`--dart-define-from-file`). Holds no secrets —
+# the publishable key is safe to ship — but the project ref and OAuth client
+# IDs are deployment-specific, so each environment keeps its own copy.
+.env.app
+
 # Android signing — losing these means never shipping an update to the same
 # Play listing, and leaking them lets anyone publish as you. Back the keystore
 # up somewhere durable and offline; never commit either.

@@ -319,6 +319,29 @@ max_frequency = "5s"
 # Use an external OAuth provider. The full list of providers are: `apple`, `azure`, `bitbucket`,
 # `discord`, `facebook`, `github`, `gitlab`, `google`, `keycloak`, `linkedin_oidc`, `notion`, `twitch`,
 # `twitter`, `x`, `slack`, `spotify`, `workos`, `zoom`.
+
+# The app signs in with Google and Apple through gotrue's ID-token grant
+# (`signInWithIdToken`), not the browser redirect flow, so no redirect URL or
+# deep-link scheme is involved. What gotrue does need is the list of client IDs
+# whose tokens it will accept — that is the `client_id` field below, and the
+# "Authorized Client IDs" box on the hosted dashboard.
+#
+# Both are left disabled here because neither can be enabled without real
+# credentials. To turn them on:
+#
+#   apple  — client_id is the iOS bundle id, `com.wordfeastgn.wgnmobile`. The
+#            native flow needs nothing else; the secret is only required if the
+#            web/Android redirect flow is ever added.
+#   google — add an [auth.external.google] block with client_id set to the Web
+#            client ID (the same value as GOOGLE_SERVER_CLIENT_ID in .env.app),
+#            and list the iOS and Android client IDs alongside it. Local sign-in
+#            also needs skip_nonce_check = true, because the native SDK's nonce
+#            handling differs from the web flow's.
+#
+# See RELEASE_CHECKLIST.md section B for the full setup, and remember the
+# hosted project is configured from the dashboard, not from this file, unless
+# you run `supabase config push`.
+
 [auth.external.apple]
 enabled = false
 client_id = ""
