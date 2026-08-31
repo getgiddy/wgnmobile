@@ -1,5 +1,9 @@
+import 'package:flutter/foundation.dart'
+    show LicenseEntryWithLineBreaks, LicenseRegistry;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'app.dart';
@@ -7,8 +11,30 @@ import 'data/supabase_client.dart';
 import 'services/audio_player_service.dart';
 import 'services/prefs.dart';
 
+/// Sora, Newsreader and Space Mono ship in assets/google_fonts. They used to be
+/// downloaded from fonts.gstatic.com on first launch, which meant a cold install
+/// rendered every screen in the fallback face and then reflowed once the real
+/// ones landed — and offline, never got them at all. Bundling also makes this a
+/// hard failure rather than a silent network call when a weight is missing from
+/// the assets, so it surfaces in dev instead of in someone's first run.
+const _fontFamilies = ['sora', 'newsreader', 'spacemono'];
+
+void _registerFontLicenses() {
+  // OFL requires the licence to ship with the fonts.
+  LicenseRegistry.addLicense(() async* {
+    for (final family in _fontFamilies) {
+      yield LicenseEntryWithLineBreaks(
+        ['google_fonts', family],
+        await rootBundle.loadString('assets/google_fonts/OFL-$family.txt'),
+      );
+    }
+  });
+}
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  GoogleFonts.config.allowRuntimeFetching = false;
+  _registerFontLicenses();
   await PrefsNotifier.init();
   await Supabase.initialize(
     url: AppEnv.supabaseUrl,

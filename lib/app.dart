@@ -22,6 +22,28 @@ import 'features/testimonies/testimonies_screen.dart';
 import 'features/updates/updates_screen.dart';
 import 'services/prefs.dart';
 
+/// Navigator the tab bar and mini player are wrapped around. Detail screens are
+/// pushed onto this one, so they cover the tabs while the chrome stays put —
+/// and, because the tab stack is only covered rather than torn down, every
+/// tab's scroll position and state survives underneath.
+final _shellNavigatorKey = GlobalKey<NavigatorState>();
+
+/// One bottom-tab destination, as its own branch so it keeps its own state.
+/// The page transition doesn't matter much here — an [IndexedStack] swaps
+/// branches by changing index, with no animation to run — but a plain
+/// `builder:` would give the branch's first build the platform default, which
+/// under MaterialApp on iOS is a Cupertino push.
+StatefulShellBranch _tab(String path, Widget Function() build) =>
+    StatefulShellBranch(
+      routes: [
+        GoRoute(
+          path: path,
+          pageBuilder: (_, state) =>
+              NoTransitionPage(key: state.pageKey, child: build()),
+        ),
+      ],
+    );
+
 final _router = GoRouter(
   // Dev aid: `--dart-define=INITIAL_ROUTE=/sermons` opens the app on a
   // specific screen (used for screenshot walks).
@@ -29,13 +51,26 @@ final _router = GoRouter(
       const String.fromEnvironment('INITIAL_ROUTE', defaultValue: '/'),
   routes: [
     ShellRoute(
+      navigatorKey: _shellNavigatorKey,
       builder: (context, state, child) => WgnShell(child: child),
       routes: [
-        GoRoute(path: '/', builder: (_, _) => const HomeScreen()),
-        GoRoute(path: '/sermons', builder: (_, _) => const SermonsScreen()),
-        GoRoute(path: '/devotions', builder: (_, _) => const DevotionsScreen()),
-        GoRoute(path: '/live', builder: (_, _) => const LiveScreen()),
-        GoRoute(path: '/more', builder: (_, _) => const MoreScreen()),
+        // The five tabs. Each is a branch with its own navigator, all held
+        // alive in an IndexedStack: tapping between them is an index change,
+        // not a rebuild, so switching is instant and nothing is re-fetched or
+        // scrolled back to the top. Tab taps stay `context.go`.
+        StatefulShellRoute.indexedStack(
+          builder: (context, state, navigationShell) => navigationShell,
+          branches: [
+            _tab('/', () => const HomeScreen()),
+            _tab('/sermons', () => const SermonsScreen()),
+            _tab('/devotions', () => const DevotionsScreen()),
+            _tab('/live', () => const LiveScreen()),
+            _tab('/more', () => const MoreScreen()),
+          ],
+        ),
+        // Reached by push from more than one tab, so they live beside the
+        // branches rather than being duplicated into each one. These keep the
+        // platform slide, which is the right idiom for a push.
         GoRoute(path: '/player', builder: (_, _) => const PlayerScreen()),
         GoRoute(
           path: '/reader/:id',

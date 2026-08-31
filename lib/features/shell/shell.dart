@@ -25,8 +25,12 @@ class WgnShell extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final c = context.wgn;
     final location = GoRouterState.of(context).uri.path;
-    final np = ref.watch(playerProvider);
-    final showMini = np.sermon != null && location != '/player';
+    // Only *whether* a sermon is loaded decides if the mini player shows, but
+    // the player's position stream ticks several times a second. Watching the
+    // whole state rebuilt the shell — and the nav bar with it — on every tick,
+    // including every frame of a route transition. Narrow it to the bool.
+    final hasSermon = ref.watch(playerProvider.select((s) => s.sermon != null));
+    final showMini = hasSermon && location != '/player';
 
     return Scaffold(
       backgroundColor: c.bg,
@@ -35,7 +39,10 @@ class WgnShell extends ConsumerWidget {
           Column(
             children: [
               Expanded(child: child),
-              if (showMini) const _MiniPlayer(),
+              // The mini player legitimately repaints on every position tick.
+              // Without a boundary that dirties the whole shell layer, so the
+              // nav bar re-rasters alongside it.
+              if (showMini) const RepaintBoundary(child: _MiniPlayer()),
               _NavBar(location: location),
             ],
           ),

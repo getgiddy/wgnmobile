@@ -54,3 +54,10 @@ flutter:
   uses-material-design: true
   assets:
     - assets/images/
+    # Sora / Newsreader / Space Mono, bundled rather than fetched. These are
+    # declared as plain assets, not under `fonts:` — google_fonts resolves them
+    # by filename (`<Family>-<Variant>.ttf`) out of the asset manifest and only
+    # falls back to the network when a variant is missing, which main.dart now
+    # turns into a hard error. If a new weight starts being used, add it to
+    # tool/fetch_fonts.py and re-run it.
+    - assets/google_fonts/
